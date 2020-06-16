@@ -414,3 +414,27 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   ```
 
   Try to `curl` any other external resource. You should not be able to access it as `allow-dns-netset-egress` policy explicitly denies access to public IP ranges listed in `public-ip-range` global network set.
+
+## Configure SSH access to AKS nodes
+
+For more details on how to configure SSH access to the nodes refer to the [official AKS documentation](https://docs.microsoft.com/en-us/azure/aks/ssh#create-the-ssh-connection).
+
+```bash
+# create ssh helper pod
+kubectl run --generator=run-pod/v1 -it --rm aks-ssh --image=debian
+# if cluster is mixed, use this to pin pod to Linux
+kubectl run -it --rm aks-ssh --image=debian --overrides='{"apiVersion":"apps/v1","spec":{"template":{"spec":{"nodeSelector":{"beta.kubernetes.io/os":"linux"}}}}}'
+# install ssh client in the helper pod
+apt-get update && apt-get install openssh-client -y
+
+# set vars
+SSH_KEY='/path/to/ssh_key'
+NODE_NAME='aks_node_name'
+NODE_IP=$(kubectl get node $NODE_NAME -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+# open a new terminal and run
+kubectl cp $SSH_KEY $(kubectl get pod -l run=aks-ssh -o jsonpath='{.items[0].metadata.name}'):/id_rsa
+
+# run these commands inside of aks-ssh POD session
+chmod 0600 id_rsa
+ssh -i id_rsa azureuser@$NODE_IP
+```
