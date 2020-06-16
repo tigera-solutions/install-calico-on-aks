@@ -394,19 +394,21 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 
 - Deploy DNS policy to allow access to external resource
 
-```bash
-# deploy network sets resources
-kubectl apply -f demo/35-dns-policy/global-netset.yaml
-kubectl apply -f demo/35-dns-policy/public-ip-netset.yaml
-# deploy DNS policy
-kubectl apply -f demo/35-dns-policy/policy-allow-dns-netset-egress.yaml
-```
+  ```bash
+  # deploy network sets resources
+  kubectl apply -f demo/35-dns-policy/global-netset.yaml
+  kubectl apply -f demo/35-dns-policy/public-ip-netset.yaml
+  # deploy DNS policy
+  kubectl apply -f demo/35-dns-policy/policy-allow-dns-netset-egress.yaml
+  ```
 
 - Test `www.google.com` access
 
-```bash
-# curl www.google.com from centos POD
-kubectl -n demo exec -t $(kubectl get pod -l app=centos -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -ILs http://www.google.com | grep -i http
-# curl www.google.com from netshoot POD
-kubectl -n demo exec -t $(kubectl get pod -l app=netshoot -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -ILs http://www.google.com | grep -i http
-```
+  ```bash
+  # curl www.google.com from centos POD
+  kubectl -n demo exec -t $(kubectl get pod -l app=centos -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -ILs http://www.google.com | grep -i http
+  # curl www.google.com from netshoot POD
+  kubectl -n demo exec -t $(kubectl get pod -l app=netshoot -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -ILs http://www.google.com | grep -i http
+  ```
+
+  Try to `curl` any other external resource. You should not be able to access it as `allow-dns-netset-egress` policy explicitly denies access to public IP ranges listed in `public-ip-range` global network set.
