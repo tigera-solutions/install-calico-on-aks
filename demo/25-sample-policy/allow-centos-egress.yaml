@@ -1,0 +1,19 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-demo-centos-egress
+  namespace: demo
+spec:
+  selector: app == 'centos'
+  order: 100
+  types:
+    - Egress
+  egress:
+  - action: Allow
+    protocol: UDP
+    destination:
+      ports:
+      - '53'
+  - action: Allow
+    protocol: TCP
+    destination: {}

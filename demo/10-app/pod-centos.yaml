@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: centos
+  namespace: demo
+  labels:
+    app: centos
+spec:
+  containers:
+  - name: centos
+    image: centos:latest
+    command: [ "/bin/bash", "-c", "--" ]
+    args: [ "while true; do curl https://www.google.com; sleep 3; done;" ]
+    resources: {}

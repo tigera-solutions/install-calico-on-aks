@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "servicePrincipalClientId": {
+          "value": ""
+      },
+      "servicePrincipalClientSecret": {
+          "value": ""
+      },
+      "clusterName": {
+          "value": "calient-azcni"
+      },
+      "serviceCidr": {
+          "value": "10.53.0.0/16"
+      },
+      "dnsServiceIP": {
+          "value": "10.53.0.10"
+      },
+      "agentVMSize": {
+          "value": "Standard_D2s_v3"
+      },
+      "agentCount": {
+          "value": 2
+      },
+      "kubernetesVersion": {
+          "value": "1.16.9"
+      },
+      "osDiskSizeGB": {
+          "value": 50
+      },
+      "sshRSAPublicKey": {
+          "value": ""
+      }
+  }
+}

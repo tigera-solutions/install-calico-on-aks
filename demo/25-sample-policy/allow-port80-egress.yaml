@@ -1,0 +1,16 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-demo-port80-egress
+  namespace: demo
+spec:
+  selector: app == 'netshoot'
+  order: 200
+  types:
+    - Egress
+  egress:
+  - action: Allow
+    protocol: TCP
+    destination:
+      ports:
+      - '80'

@@ -1,0 +1,17 @@
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-demo-nginx-ingress
+  namespace: demo
+spec:
+  selector: app == 'open-nginx'
+  order: 200
+  types:
+    - Ingress
+  ingress:
+  - action: Allow
+    protocol: TCP
+    source: {}
+    destination:
+      ports:
+      - '80'
