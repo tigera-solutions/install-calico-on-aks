@@ -1,6 +1,7 @@
 # Getting up and running with Calico on AKS
 
-This guide looks into a few options to create an AKS cluster and explores networking and policy options offered in AKS. The examples include Azure CLI provisioned cluster and a cluster defined via ARM template.
+This guide looks into a few options to create an AKS cluster and explores networking and policy options offered in AKS. The examples include Azure CLI provisioned cluster and a cluster defined via ARM template.  
+For more details about AKS networking options refer to [Everything you need to know about  Kubernetes networking on Azure](https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-azure/) video recording.
 
 `Calico open source` and `Calico Enterprise` versions are used in this guide. Refer to [Calico documentation](https://docs.projectcalico.org/calico-enterprise/) for more information on how one compares to the other.
 
@@ -28,16 +29,17 @@ For example in a cluster with node subnet `10.240.0.0/16` each node get an IP fr
   az aks create --network-plugin kubenet --network-policy calico ...
   ```
 
-- Using `azure-cni` with `azure` network policy. This option configures the cluster with `azure-cni` and `azure` network policy engine. This policy engine implements basic [Kubernetes network policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/). In this configuration nodes and PODs use IPs from the same subnet range. In other words the POD network is routable. You can tell the POD network is routable if you cannot see a `routetable` resource in your cluster's auxiliary resource group.  
-Such configuration allows for other Azure services to communicate with cluster PODs using their IPs.
-
-  >It is important to size the VNET properly for AKS cluster as IP exhaustion is a common issue for AKS clusters with routable POD-network.
+- Using `azure-cni` with `azure` network policy. This option configures the cluster with `azure-cni` and `azure` network policy engine. This policy engine implements basic [Kubernetes network policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/). The bridge is used on each host to facilitate POD-to-POD communications.
 
   ```bash
   az aks create --network-plugin azure --network-policy azure ...
   ```
 
-- Using `azure-cni` with `Calico` network policy. This option is similar to previous one in terms of network configuration. However, `Calico` is used for network policy enforcement.
+- Using `azure-cni` with `Calico` network policy. In this configuration nodes and PODs use IPs from the same underlying VNET, and the POD IPs are configured as secondary IPs on the VM's Azure network interfaces. In this case the underlying VNET is fully aware of the pod IP addresses, and can route POD traffic without needing User Defined Routes. In other words, the POD-network is routable. You can tell whether the POD network is routable if you cannot see a `routetable` resource in your cluster's auxiliary resource group.
+
+  >It is important to size the VNET properly for AKS cluster as IP exhaustion is a common issue for AKS clusters with routable POD-network.
+
+  Such configuration allows for other Azure services to communicate with cluster PODs directly by using their IPs. `Calico` is used for network policy enforcement.
 
   >The installed `Calico` version is maintained by AKS controller and cannot be changed.
 
