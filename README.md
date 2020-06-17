@@ -317,6 +317,8 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 
 ### `Calico OSS` demo scenario
 
+>Calico OSS demo scenario can be used in both Calico OSS and Calico Enteprise clusters.
+
 - Deploy sample application.
 
   ```bash
@@ -335,7 +337,7 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   kubectl -n demo logs -f centos
   kubectl -n demo logs -f netshoot
   # deploy k8s default deny policy
-  DATASTORE_TYPE=kubernetes calicoctl apply -f demo/20-default-deny/
+  kubectl apply -f demo/20-default-deny/policy-default-deny-k8s.yaml
   ```
 
   After the policy is applied, both `centos` and `netshoot` processes should not be able to query the targeted resources.
@@ -363,6 +365,8 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   Once all three policies are applied, the `netshoot` POD should be able to get response from the `open-nginx` cluster service.
 
 ### `Calico Enterprise` demo scenario
+
+>Calico Enterprise demo scenario can be used only in Calico Enteprise clusters as it uses enterprise features.
 
 - Deploy sample application.
 
