@@ -168,7 +168,7 @@ Create AKS cluster:
   >By default AKS cluster uses `VirtualMachineScaleSets` for its nodes. You can change it via `--vm-set-type` parameter. See `az aks create --help` for details.
 
   ```bash
-  # var to use my SSH key
+  # var to use existing SSH key
   SSH_KEY='/path/to/ssh_key.pub'
   # deploy AKS cluster using Calico CNI w/ Host-Local IPAM and Calico net policy
   az aks create \
@@ -187,7 +187,7 @@ Create AKS cluster:
     --node-osdisk-size 50 \
     --node-vm-size Standard_D2s_v3 \
     --output table \
-    --ssh-key-value ~/.ssh/az_rsa.pub
+    --ssh-key-value $SSH_KEY
   ```
 
 - View cluster state.
