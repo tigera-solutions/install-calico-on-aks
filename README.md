@@ -317,7 +317,7 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 
 ### `Calico OSS` demo scenario
 
->Calico OSS demo scenario can be used in both Calico OSS and Calico Enteprise clusters.
+>Calico OSS demo scenario can be used in both Calico OSS and Calico Enterprise clusters.
 
 - Deploy sample application.
 
@@ -366,7 +366,7 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 
 ### `Calico Enterprise` demo scenario
 
->Calico Enterprise demo scenario can be used only in Calico Enteprise clusters as it uses enterprise features.
+>Calico Enterprise demo scenario can be used only in Calico Enterprise clusters as it uses enterprise features.
 
 - Deploy sample application.
 
