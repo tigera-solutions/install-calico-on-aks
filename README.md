@@ -236,6 +236,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
   CLUSTER_NAME='calient-azcni'
+  K8S_VERSION=1.18.4
   ```
 
 - Create resource group and set service principal role on it.
@@ -257,9 +258,9 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
 
   ```bash
   # validate the template and parameters
-  az deployment group validate --resource-group $RG --template-file arm/aks-vmss.json --parameters @arm/aks.parameters.json
+  az deployment group validate --resource-group $RG --template-file arm/aks-vmss.json --parameters @arm/aks.parameters.json clusterName=$CLUSTER_NAME servicePrincipalClientId=$CLIENT_ID servicePrincipalClientSecret="$SP_PASSWORD" kubernetesVersion=$K8S_VERSION sshRSAPublicKey="$(cat $SSH_KEY)"
   # deploy the template with parameters
-  az deployment group create --resource-group $RG --template-file arm/aks-vmss.json --parameters @arm/aks.parameters.json
+  az deployment group create --resource-group $RG --template-file arm/aks-vmss.json --parameters @arm/aks.parameters.json clusterName=$CLUSTER_NAME servicePrincipalClientId=$CLIENT_ID servicePrincipalClientSecret=$SP_PASSWORD kubernetesVersion=$K8S_VERSION sshRSAPublicKey="$(cat $SSH_KEY)"
   ```
 
 - View cluster state.
@@ -304,7 +305,7 @@ Remove resource group and service principal account.
 
 ```bash
 # delete resource group
-az group delete -n $RG
+az group delete -n $RG --yes
 # delete SP account
 az ad sp delete --id $(az ad sp list --display-name $SP --query '[].appId' -o tsv)
 ```
