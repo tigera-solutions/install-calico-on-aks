@@ -434,10 +434,12 @@ apt-get update && apt-get install openssh-client -y
 
 # set vars
 SSH_KEY='/path/to/ssh_key'
-NODE_NAME='aks_node_name'
-NODE_IP=$(kubectl get node $NODE_NAME -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 # open a new terminal and run
 kubectl cp $SSH_KEY $(kubectl get pod -l run=aks-ssh -o jsonpath='{.items[0].metadata.name}'):/id_rsa
+
+# get node IP to use within aks-ssh POD
+NODE_NAME='aks_node_name'
+echo "NODE_IP=$(kubectl get node $NODE_NAME -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')"
 
 # run these commands inside of aks-ssh POD session
 chmod 0600 id_rsa
