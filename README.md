@@ -135,10 +135,11 @@ Create AKS cluster:
   ### set vars
   RG='calico-wbnr'
   LOCATION='centralus'
+  CLUSTER_NAME='calico-cni'
   SP='calico-aks-sp'
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  CLUSTER_NAME='calico-cni'
+  K8S_VERSION=1.17.9
   ```
 
 - Create the resource group and configure service principal roles on it
@@ -174,7 +175,7 @@ Create AKS cluster:
   az aks create \
     --resource-group $RG \
     --name $CLUSTER_NAME \
-    --kubernetes-version 1.16.9 \
+    --kubernetes-version $K8S_VERSION \
     --nodepool-name 'nix' \
     --node-count 2 \
     --network-plugin kubenet \
