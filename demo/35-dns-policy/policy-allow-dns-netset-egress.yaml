@@ -4,7 +4,7 @@ metadata:
   name: security.allow-dns-netset-egress
 spec:
   tier: security
-  selector: (app == 'netshoot' || app == 'centos')
+  selector: "app == 'netshoot' || app == 'centos'"
   order: 200
   types:
     - Egress
@@ -22,3 +22,7 @@ spec:
     source: {}
     destination:
       selector: type == "public"
+  # example to pass all other traffic to the next tier
+  # - action: Pass
+  #   source: {}
+  #   destination: {}

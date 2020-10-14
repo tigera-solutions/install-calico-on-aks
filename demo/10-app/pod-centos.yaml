@@ -11,5 +11,5 @@ spec:
   - name: centos
     image: centos:latest
     command: [ "/bin/bash", "-c", "--" ]
-    args: [ "while true; do curl https://www.google.com; sleep 3; done;" ]
+    args: [ "while true; do curl -m5 https://www.google.com; sleep 3; done;" ]
     resources: {}

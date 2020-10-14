@@ -14,5 +14,5 @@ spec:
   - name: netshoot
     image: nicolaka/netshoot:latest
     command: [ "/bin/bash", "-c", "--" ]
-    args: [ "while true; do curl http://open-nginx; sleep 3; done;" ]
+    args: [ "while true; do curl -m5 http://open-nginx; sleep 3; done;" ]
     resources: {}

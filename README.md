@@ -394,7 +394,7 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   # attach to PODs log streams
   kubectl -n demo logs -f centos
   kubectl -n demo logs -f netshoot
-  # deploy Calico default deny policy
+  # you can deploy Calico default deny policy which applies the same default deny rules to demo namespace as was used in a standard K8s policy in Calico OSS demo scenario
   kubectl apply -f demo/35-dns-policy/policy-default-deny-calico.yaml
   ```
 
@@ -409,6 +409,8 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   # deploy DNS policy
   kubectl apply -f demo/35-dns-policy/policy-allow-dns-netset-egress.yaml
   ```
+
+  Once the DNS policy is deployed, `netshoot` pod would not be able to communicate with the `nginx` pod because the DNS policy does not explicitly define a rule to allow this communication. To fix this issue, either user Calico Enterprise Manager UI to add a `Pass` rule to the DNS policy or uncomment the `Pass` action in the `demo/35-dns-policy/policy-allow-dns-netset-egress.yaml` file and re-deploy the policy.
 
 - Test `www.google.com` access
 
