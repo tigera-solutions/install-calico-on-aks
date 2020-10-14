@@ -142,6 +142,13 @@ Create AKS cluster:
   K8S_VERSION=1.17.9
   ```
 
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
+  ```
+
 - Create the resource group and configure service principal roles on it
 
   ```bash
@@ -155,13 +162,6 @@ Create AKS cluster:
   az role assignment create --role $ROLE --assignee $CLIENT_ID --scope $RG_ID
   # [optional] if Contributor role cannot be used, use 'Network Contributor' role which provides minimum required permissions for AKS resources
   az role assignment create --role $NET_ROLE --assignee $CLIENT_ID --scope $RG_ID
-  ```
-
-- Check supported k8s versions for the region
-
-  ```bash
-  # list supported k8s versions
-  az aks get-versions --location $LOCATION --output table
   ```
 
 - Deploy AKS cluster.
