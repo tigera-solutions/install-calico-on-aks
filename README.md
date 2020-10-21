@@ -139,7 +139,7 @@ Create AKS cluster:
   SP='calico-aks-sp'
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  K8S_VERSION=1.17.9
+  K8S_VERSION=1.18.8
   ```
 
 - Check supported k8s versions for the region
@@ -237,7 +237,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
   CLUSTER_NAME='calient-azcni'
-  K8S_VERSION=1.18.4
+  K8S_VERSION=1.18.8
   ```
 
 - Create resource group and set service principal role on it.
