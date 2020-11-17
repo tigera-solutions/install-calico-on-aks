@@ -127,6 +127,13 @@ If you want to use any AKS preview features configure [aks-preview](#configure-a
 
 Create AKS cluster:
 
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
+  ```
+
 - Login into `azure` and set helper variables.
 
   ```bash
@@ -139,14 +146,7 @@ Create AKS cluster:
   SP='calico-aks-sp'
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  K8S_VERSION=1.18.8
-  ```
-
-- Check supported k8s versions for the region
-
-  ```bash
-  # list supported k8s versions
-  az aks get-versions --location $LOCATION --output table
+  K8S_VERSION=1.18.10
   ```
 
 - Create the resource group and configure service principal roles on it
@@ -225,6 +225,13 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
 
 - Set `servicePrincipalClientSecret` using value from `SP_PASSWORD` variable defined in [service principal section](#configure-service-principal)
 - Set `sshRSAPublicKey` value that represents your SSH public key. It start with `ssh-rsa ...`
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
+  ```
+
 - Login into `azure` and set helper variables.
 
   ```bash
@@ -237,7 +244,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
   CLUSTER_NAME='calient-azcni'
-  K8S_VERSION=1.18.8
+  K8S_VERSION=1.18.10
   ```
 
 - Create resource group and set service principal role on it.
