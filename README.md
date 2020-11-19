@@ -343,8 +343,8 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 
   ```bash
   # attach to PODs log streams
-  kubectl -n demo logs -f centos
-  kubectl -n demo logs -f netshoot
+  kubectl -n demo logs -f centos --tail 1
+  kubectl -n demo logs -f netshoot --tail 1
   # deploy k8s default deny policy
   kubectl apply -f demo/20-default-deny/policy-default-deny-k8s.yaml
   ```
@@ -401,7 +401,7 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   # attach to PODs log streams
   kubectl -n demo logs -f centos
   kubectl -n demo logs -f netshoot
-  # you can deploy Calico default deny policy which applies the same default deny rules to demo namespace as was used in a standard K8s policy in Calico OSS demo scenario
+  # deploy Calico default deny policy which applies the same default deny rules to demo namespace as was used in a standard K8s policy in Calico OSS demo scenario
   kubectl apply -f demo/35-dns-policy/policy-default-deny-calico.yaml
   ```
 
@@ -410,6 +410,8 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 - Deploy DNS policy to allow access to external resource
 
   ```bash
+  # deploy policy to allow kube-dns access
+  kubectl apply -f demo/35-dns-policy/policy-allow-kube-dns.yaml
   # deploy network sets resources
   kubectl apply -f demo/35-dns-policy/global-netset.yaml
   kubectl apply -f demo/35-dns-policy/public-ip-netset.yaml
@@ -423,9 +425,9 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
 
   ```bash
   # curl www.google.com from centos POD
-  kubectl -n demo exec -t $(kubectl get pod -l app=centos -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -ILs http://www.google.com | grep -i http
+  kubectl -n demo exec -t $(kubectl get pod -l app=centos -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -m3 -ILs http://www.google.com | grep -i http
   # curl www.google.com from netshoot POD
-  kubectl -n demo exec -t $(kubectl get pod -l app=netshoot -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -ILs http://www.google.com | grep -i http
+  kubectl -n demo exec -t $(kubectl get pod -l app=netshoot -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -m3 -ILs http://www.google.com | grep -i http
   ```
 
   Try to `curl` any other external resource. You should not be able to access it as `allow-dns-netset-egress` policy explicitly denies access to public IP ranges listed in `public-ip-range` global network set.

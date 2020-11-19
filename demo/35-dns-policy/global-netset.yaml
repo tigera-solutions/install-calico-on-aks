@@ -1,7 +1,7 @@
 kind: GlobalNetworkSet
 apiVersion: projectcalico.org/v3
 metadata:
-  name: 2-external-domain
+  name: allowed-external-domains
   labels: 
     domain: external
 spec:

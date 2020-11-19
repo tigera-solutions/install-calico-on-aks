@@ -12,5 +12,6 @@ spec:
   - action: Allow
     protocol: TCP
     destination:
+      selector: app == 'open-nginx'
       ports:
       - '80'

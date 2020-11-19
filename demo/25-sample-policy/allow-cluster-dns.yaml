@@ -5,7 +5,7 @@ metadata:
   namespace: demo
 spec:
   selector: all()
-  order: 100
+  order: 10
   types:
     - Egress
   egress:
