@@ -18,13 +18,16 @@
           "value": "10.53.0.10"
       },
       "agentVMSize": {
-          "value": "Standard_D2s_v3"
+          "value": "Standard_D4s_v3"
       },
       "agentCount": {
-          "value": 2
+          "value": 3
+      },
+      "maxPods": {
+          "value": 50
       },
       "kubernetesVersion": {
-          "value": "1.16.9"
+          "value": "1.19.6"
       },
       "osDiskSizeGB": {
           "value": 50

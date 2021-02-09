@@ -82,6 +82,8 @@ Steps to configure the extension:
 
 - When you want to use a particular feature, you need to register it. This example registers `AKSNetworkModePreview` preview feature to allow configuration of `transparent` network mode for AKS cluster.
 
+>This is only needed when using Azure CNI preceding v1.2.0. Since Azure CNI v1.2.0, [the `transparent` network mode is default option](https://docs.microsoft.com/en-us/azure/aks/faq#what-is-azure-cni-transparent-mode-vs-bridge-mode) and can be deployed using `azure-cli` v2.17+.
+
   ```bash
   # register the feature
   az feature register -n AKSNetworkModePreview --namespace Microsoft.ContainerService
@@ -146,7 +148,7 @@ Create AKS cluster:
   SP='calico-aks-sp'
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  K8S_VERSION=1.18.10
+  K8S_VERSION=1.19.6
   ```
 
 - Create the resource group and configure service principal roles on it
@@ -244,7 +246,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
   CLUSTER_NAME='calient-azcni'
-  K8S_VERSION=1.18.10
+  K8S_VERSION=1.19.6
   ```
 
 - Create resource group and set service principal role on it.
@@ -287,7 +289,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   az aks get-credentials --resource-group $RG --name $CLUSTER_NAME --file ./kubeconfig
   ```
 
-- Refer to [Tigera official documentation](https://docs.tigera.io/getting-started/kubernetes/managed-public-cloud/aks#install-calico-enterprise) to install Calico Enterprise on AKS
+- Refer to [Tigera official documentation](https://docs.tigera.io/getting-started/kubernetes/aks) to install Calico Enterprise on AKS
 
 At this point cluster should be ready for use. See [demo section](#demo) for example app and policies to deploy onto the cluster.
 
@@ -416,10 +418,10 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   kubectl apply -f demo/35-dns-policy/global-netset.yaml
   kubectl apply -f demo/35-dns-policy/public-ip-netset.yaml
   # deploy DNS policy
-  kubectl apply -f demo/35-dns-policy/policy-allow-dns-netset-egress.yaml
+  kubectl apply -f demo/35-dns-policy/policy-allow-external-dns-egress.yaml
   ```
 
-  Once the DNS policy is deployed, `netshoot` pod would not be able to communicate with the `nginx` pod because the DNS policy does not explicitly define a rule to allow this communication. To fix this issue, either user Calico Enterprise Manager UI to add a `Pass` rule to the DNS policy or uncomment the `Pass` action in the `demo/35-dns-policy/policy-allow-dns-netset-egress.yaml` file and re-deploy the policy.
+  Once the DNS policy is deployed, `netshoot` pod would not be able to communicate with the `nginx` pod because the DNS policy does not explicitly define a rule to allow this communication. To fix this issue, either user Calico Enterprise Manager UI to add a `Pass` rule to the DNS policy or uncomment the `Pass` action in the `demo/35-dns-policy/policy-allow-external-dns-egress.yaml` file and re-deploy the policy.
 
 - Test `www.google.com` access
 
@@ -430,7 +432,7 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   kubectl -n demo exec -t $(kubectl get pod -l app=netshoot -n demo -o jsonpath='{.items[*].metadata.name}') -- curl -m3 -ILs http://www.google.com | grep -i http
   ```
 
-  Try to `curl` any other external resource. You should not be able to access it as `allow-dns-netset-egress` policy explicitly denies access to public IP ranges listed in `public-ip-range` global network set.
+  Try to `curl` any other external resource. You should not be able to access it as `allow-external-dns-egress` policy explicitly denies access to public IP ranges listed in `public-ip-range` global network set.
 
 ## Configure SSH access to AKS nodes
 

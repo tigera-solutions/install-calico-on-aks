@@ -1,7 +1,7 @@
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
-  name: security.allow-dns-netset-egress
+  name: security.allow-external-dns-egress
 spec:
   tier: security
   selector: "app == 'netshoot' || app == 'centos'"
@@ -16,8 +16,14 @@ spec:
       ports:
       - '53'
   - action: Allow
+    source: {}
     destination:
-      selector: domain == "external"
+      domains:
+      - '*.google.com'
+      - 'google.com'
+  # - action: Allow
+  #   destination:
+  #     selector: domain == "external"
   - action: Deny
     source: {}
     destination:

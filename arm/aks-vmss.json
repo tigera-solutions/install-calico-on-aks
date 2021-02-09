@@ -41,6 +41,15 @@
           "minValue": 1,
           "maxValue": 50
       },
+      "maxPods": {
+          "type": "int",
+          "defaultValue": 30,
+          "metadata": {
+              "description": "Max number of pods per node. Value should be between 10 and 250."
+          },
+          "minValue": 30,
+          "maxValue": 250
+      },
       "agentVMSize": {
           "type": "string",
           "defaultValue": "Standard_D4s_v3",
@@ -121,7 +130,7 @@
                       "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
                       "count": "[parameters('agentCount')]",
                       "vmSize": "[parameters('agentVMSize')]",
-                      "maxPods": 30,
+                      "maxPods": "[parameters('maxPods')]",
                       "type": "VirtualMachineScaleSets",
                       "enableNodePublicIP": false,
                       "nodeLabels": {},
