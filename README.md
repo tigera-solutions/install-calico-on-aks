@@ -403,6 +403,10 @@ Use [calicoctl](https://docs.projectcalico.org/getting-started/clis/calicoctl/in
   # attach to PODs log streams
   kubectl -n demo logs -f centos
   kubectl -n demo logs -f netshoot
+  
+  # deploy staged default-deny policy
+  demo/35-dns-policy/policy-staged-default-deny-calico.yaml
+
   # deploy Calico default deny policy which applies the same default deny rules to demo namespace as was used in a standard K8s policy in Calico OSS demo scenario
   kubectl apply -f demo/35-dns-policy/policy-default-deny-calico.yaml
   ```

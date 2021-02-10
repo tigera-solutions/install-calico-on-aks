@@ -1,0 +1,10 @@
+apiVersion: projectcalico.org/v3
+kind: StagedGlobalNetworkPolicy
+metadata:
+  name: calico-default-deny
+spec:
+  order: 2000
+  selector: "projectcalico.org/namespace == 'demo'"
+  types:
+  - Ingress
+  - Egress
