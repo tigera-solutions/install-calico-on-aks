@@ -280,6 +280,12 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   az aks list --resource-group $RG --output table
   ```
 
+- View cluster `networkProfile` configuration and make sure `"networkMode": "transparent"` option is set
+
+  ```bash
+  az aks show -g $RG -n $CLUSTER_NAME --query 'networkProfile' --output json
+  ```
+
 - Once cluster is provisioned, retrieve `kubeconfig` info to communicate with the cluster and install `kubectl` if needed.
 
   ```bash
