@@ -48,53 +48,12 @@ For example in a cluster with node subnet `10.240.0.0/16` each node get an IP fr
   ```
 
 - Using `azure-cni` with `transparent` network mode and `Calico` network policy. This configuration uses `azure-cni` as described in previous two options and configures `transparent` network mode that is compatible with `Calico Enterprise` which is not managed by AKS controller.  
-To get AKS cluster configured with `transparent` network mode, you can either user `ARM template` or install the cluster with `--network-plugin azure` option and then use a [utility pod](https://github.com/ivansharamok/istioworkshop/blob/master/03-TigeraSecure-Install/bridge-to-transparent.yaml) to enforce `transparent` network mode on AKS nodes.
+To get AKS cluster configured with `transparent` network mode, you can either user `ARM template` or use `az aks create` command and ensure that Azure CLI is **v2.17+** version which provisions AKS cluster with Azure CNI that has `transparent` mode as default network configuration.
 
   >The `ARM template` deployment is discussed later in this guide.
 
   ```bash
   az aks create --network-plugin azure ...
-  ```
-
-## Configure Azure CLI extension and register a feature
-
-Many AKS preview features including preview versions of Kubernetes are available to be used with `aks-preview` extension. It's a common practice to use this extension to get access to the latest AKS features. Refer to Azure documentation for more [details on extensions](https://docs.microsoft.com/en-us/cli/azure/azure-cli-extensions-overview?view=azure-cli-latest), [features](https://docs.microsoft.com/en-us/cli/azure/feature?view=azure-cli-latest), and [providers](https://docs.microsoft.com/en-us/cli/azure/provider?view=azure-cli-latest).
-
-Steps to configure the extension:
-
-- List all extensions to see if `aks-extension` already installed or has update available.
-
-  ```bash
-  az extension list-available --output table
-  ```
-
-- If the extension is already installed and has an update available, update it.
-
-  ```bash
-  az extension update --name aks-preview
-  ```
-
-- If the extension isn't installed, install it.
-
-  ```bash
-  az extension add --name aks-preview
-  ```
-
-- When you want to use a particular feature, you need to register it. This example registers `AKSNetworkModePreview` preview feature to allow configuration of `transparent` network mode for AKS cluster.
-
->This is only needed when using Azure CNI preceding v1.2.0. Since Azure CNI v1.2.0, [the `transparent` network mode is default option](https://docs.microsoft.com/en-us/azure/aks/faq#what-is-azure-cni-transparent-mode-vs-bridge-mode) and can be deployed using `azure-cli` v2.17+.
-
-  ```bash
-  # register the feature
-  az feature register -n AKSNetworkModePreview --namespace Microsoft.ContainerService
-  # must register with the provider
-  az provider register -n Microsoft.ContainerService
-  ```
-
-- Verify the feature was registered successfully. It can take a few moments for the provider to register the feature.
-
-  ```bash
-  az feature list -o table | grep -i aksnetworkmode
   ```
 
 ## Configure service principal
@@ -106,10 +65,12 @@ Configure a service principal to be used with the AKS cluster:
 - Check if service principal with a specific name already exists.
 
   ```bash
+  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
+  DOMAIN="ORG_DOMAIN"
   # define var for service principal name
-  SP='calico-aks-sp'
+  SP="calico-aks-sp.$DOMAIN"
   # list service principal
-  az ad sp list --spn http://$SP --query "[].{id:appId,tenant:appOwnerTenantId,displayName:displayName,appDisplayName:appDisplayName,homepage:homepage,spNames:servicePrincipalNames}"
+  az ad sp list --spn "http://$SP" --query "[].{id:appId,tenant:appOwnerTenantId,displayName:displayName,appDisplayName:appDisplayName,homepage:homepage,spNames:servicePrincipalNames}"
   ```
 
 - Create the service principal and capture its password.
@@ -117,7 +78,7 @@ Configure a service principal to be used with the AKS cluster:
   >Note, the password may contain special characters that may need to be escaped. Alternatively, you can recreate the service principal account in attempt to avoid character escaping.
 
   ```bash
-  SP_PASSWORD=$(az ad sp create-for-rbac --name "http://$SP" --skip-assignment | jq '.password' | sed -e 's/^"//' -e 's/"$//')
+  SP_PASSWORD=$(az ad sp create-for-rbac --name "http://$SP" | jq '.password' | sed -e 's/^"//' -e 's/"$//')
   ```
 
 ## Using `az aks` to install `Calico` on AKS
@@ -129,13 +90,6 @@ If you want to use any AKS preview features configure [aks-preview](#configure-a
 
 Create AKS cluster:
 
-- Check supported k8s versions for the region
-
-  ```bash
-  # list supported k8s versions
-  az aks get-versions --location $LOCATION --output table
-  ```
-
 - Login into `azure` and set helper variables.
 
   ```bash
@@ -145,10 +99,19 @@ Create AKS cluster:
   RG='calico-wbnr'
   LOCATION='centralus'
   CLUSTER_NAME='calico-cni'
-  SP='calico-aks-sp'
+  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
+  DOMAIN="ORG_DOMAIN"
+  SP="calico-aks-sp.$DOMAIN"
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  K8S_VERSION=1.19.6
+  K8S_VERSION=1.21.7
+  ```
+
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
   ```
 
 - Create the resource group and configure service principal roles on it
@@ -159,7 +122,7 @@ Create AKS cluster:
   # get resource group ID
   RG_ID=$(az group show -n $RG --query 'id' -o tsv)
   # get service principal client/app Id
-  CLIENT_ID=$(az ad sp list --display-name $SP --query '[].appId' -o tsv)
+  CLIENT_ID=$(az ad sp list --display-name "http://$SP" --query '[].appId' -o tsv)
   # set service principal Contributor role on resource group
   az role assignment create --role $ROLE --assignee $CLIENT_ID --scope $RG_ID
   # [optional] if Contributor role cannot be used, use 'Network Contributor' role which provides minimum required permissions for AKS resources
@@ -189,6 +152,99 @@ Create AKS cluster:
     --client-secret $SP_PASSWORD \
     --node-osdisk-size 50 \
     --node-vm-size Standard_D2s_v3 \
+    --max-pods 70 \
+    --output table \
+    --ssh-key-value $SSH_KEY
+  ```
+
+- View cluster state.
+
+  ```bash
+  # list aks clusters
+  az aks list --resource-group $RG --output table
+  ```
+
+- Once cluster is provisioned, retrieve `kubeconfig` info to communicate with the cluster and install `kubectl` if needed.
+
+  ```bash
+  # if needed install kubectl
+  az aks install-cli
+  # retrieve kubeconfig
+  az aks get-credentials --resource-group $RG --name $CLUSTER_NAME --file ./kubeconfig
+  ```
+
+At this point cluster should be ready for use. See [demo section](#demo) for example app and policies to deploy onto the cluster.
+
+## Using `az aks` to install `Calico Enterprise` on AKS
+
+>This example assumes that Azure CLI v2.17+ is used which provisions AKS cluster with Azure CNI v1.2+ where the transparent network mode was made to be the default network configuration option.
+
+>This example refers to `SP` and `SP_PASSWORD` variables defined in [service principal section](#configure-service-principal).
+
+Create AKS cluster:
+
+- Login into `azure` and set helper variables.
+
+  ```bash
+  # login into az-cli
+  az login
+  ### set vars
+  RG='calico-wbnr'
+  LOCATION='centralus'
+  CLUSTER_NAME='calient-azcni'
+  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
+  DOMAIN="ORG_DOMAIN"
+  SP="calico-aks-sp.$DOMAIN"
+  ROLE='Contributor'
+  NET_ROLE='Network Contributor'
+  K8S_VERSION=1.21.7
+  ```
+
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
+  ```
+
+- Create the resource group and configure service principal roles on it
+
+  ```bash
+  # create resoruce group
+  az group create --name $RG --location $LOCATION
+  # get resource group ID
+  RG_ID=$(az group show -n $RG --query 'id' -o tsv)
+  # get service principal client/app Id
+  CLIENT_ID=$(az ad sp list --display-name "http://$SP" --query '[].appId' -o tsv)
+  # set service principal Contributor role on resource group
+  az role assignment create --role $ROLE --assignee $CLIENT_ID --scope $RG_ID
+  # [optional] if Contributor role cannot be used, use 'Network Contributor' role which provides minimum required permissions for AKS resources
+  az role assignment create --role $NET_ROLE --assignee $CLIENT_ID --scope $RG_ID
+  ```
+
+- Deploy AKS cluster.
+
+  >By default AKS cluster uses `VirtualMachineScaleSets` for its nodes. You can change it via `--vm-set-type` parameter. See `az aks create --help` for details.
+
+  ```bash
+  # var to use existing SSH key
+  SSH_KEY='/path/to/ssh_key.pub'
+  # deploy AKS cluster using Calico CNI w/ Host-Local IPAM and Calico net policy
+  az aks create \
+    --resource-group $RG \
+    --name $CLUSTER_NAME \
+    --kubernetes-version $K8S_VERSION \
+    --nodepool-name 'nix' \
+    --node-count 2 \
+    --network-plugin azure \
+    --service-cidr 10.0.0.0/16 \
+    --dns-service-ip 10.0.0.10 \
+    --docker-bridge-address 172.17.0.1/16 \
+    --service-principal $CLIENT_ID \
+    --client-secret $SP_PASSWORD \
+    --node-osdisk-size 50 \
+    --node-vm-size Standard_D2s_v3 \
+    --max-pods 70 \
     --output table \
     --ssh-key-value $SSH_KEY
   ```
@@ -222,18 +278,11 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
 - Retrieve `servicePrincipalClientId` value.
 
   ```bash
-  CLIENT_ID=$(az ad sp list --display-name $SP --query '[].appId' -o tsv)
+  CLIENT_ID=$(az ad sp list --display-name "http://$SP" --query '[].appId' -o tsv)
   ```
 
 - Set `servicePrincipalClientSecret` using value from `SP_PASSWORD` variable defined in [service principal section](#configure-service-principal)
 - Set `sshRSAPublicKey` value that represents your SSH public key. It start with `ssh-rsa ...`
-- Check supported k8s versions for the region
-
-  ```bash
-  # list supported k8s versions
-  az aks get-versions --location $LOCATION --output table
-  ```
-
 - Login into `azure` and set helper variables.
 
   ```bash
@@ -242,11 +291,20 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   ### set vars
   RG='calient-wbnr'
   LOCATION='centralus'
-  SP='calico-aks-sp'
+  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
+  DOMAIN="ORG_DOMAIN"
+  SP="calico-aks-sp.$DOMAIN"
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
   CLUSTER_NAME='calient-azcni'
-  K8S_VERSION=1.19.6
+  K8S_VERSION=1.21.7
+  ```
+
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
   ```
 
 - Create resource group and set service principal role on it.
@@ -257,7 +315,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   # get resource group ID
   RG_ID=$(az group show -n $RG --query 'id' -o tsv)
   # get service principal client/app Id
-  CLIENT_ID=$(az ad sp list --display-name $SP --query '[].appId' -o tsv)
+  CLIENT_ID=$(az ad sp list --display-name "http://$SP" --query '[].appId' -o tsv)
   # set service principal Contributor role on resource group
   az role assignment create --role $ROLE --assignee $CLIENT_ID --scope $RG_ID
   # [optional] if Contributor role cannot be used, use 'Network Contributor' role which provides minimum required permissions for AKS resources
@@ -323,7 +381,7 @@ Remove resource group and service principal account.
 # delete resource group
 az group delete -n $RG --yes
 # delete SP account
-az ad sp delete --id $(az ad sp list --display-name $SP --query '[].appId' -o tsv)
+az ad sp delete --id $(az ad sp list --display-name "http://$SP" --query '[].appId' -o tsv)
 ```
 
 ## Demo

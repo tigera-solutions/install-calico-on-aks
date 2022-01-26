@@ -27,7 +27,7 @@
           "value": 50
       },
       "kubernetesVersion": {
-          "value": "1.19.6"
+          "value": "1.21.7"
       },
       "osDiskSizeGB": {
           "value": 50
