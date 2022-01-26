@@ -235,7 +235,7 @@ Create AKS cluster:
     --name $CLUSTER_NAME \
     --kubernetes-version $K8S_VERSION \
     --nodepool-name 'nix' \
-    --node-count 2 \
+    --node-count 3 \
     --network-plugin azure \
     --service-cidr 10.0.0.0/16 \
     --dns-service-ip 10.0.0.10 \
