@@ -1,7 +1,7 @@
 # Getting up and running with Calico on AKS
 
 This guide looks into a few options to create an AKS cluster and explores networking and policy options offered in AKS. The examples include Azure CLI provisioned cluster and a cluster defined via ARM template.  
-For more details about AKS networking options refer to [Everything you need to know about  Kubernetes networking on Azure](https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-azure/) video recording.
+For more details about AKS networking options refer to [Everything you need to know about Kubernetes networking on Azure](https://www.projectcalico.org/everything-you-need-to-know-about-kubernetes-networking-on-azure/) video recording.
 
 `Calico open source` and `Calico Enterprise` versions are used in this guide. Refer to [Calico documentation](https://docs.projectcalico.org/calico-enterprise/) for more information on how one compares to the other.
 
@@ -56,6 +56,14 @@ To get AKS cluster configured with `transparent` network mode, you can either us
   az aks create --network-plugin azure ...
   ```
 
+- Using `calico` networking with private IPAM with `calico` network policy. This configuration allows users to have private Calico network for pod network and user advanced Calico network policy features. This configuration takes advantage of [bring your own CNI plugin with AKS](https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli) features.
+
+  >The cluster is created without any CNI which allows the user to install Calico CNI for AKS pod networking.
+
+  ```bash
+  az aks create --network-plugin none ...
+  ```
+
 ## Configure service principal
 
 AKS cluster requires a service principal to setup access to necessary cluster resources (e.g. `vnet`, `routetable`, etc.).
@@ -65,10 +73,11 @@ Configure a service principal to be used with the AKS cluster:
 - Check if service principal with a specific name already exists.
 
   ```bash
-  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
-  DOMAIN="ORG_DOMAIN"
-  # define var for service principal name
-  SP="calico-aks-sp.$DOMAIN"
+  ## Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
+  #DOMAIN="ORG_DOMAIN"
+  ## define var for service principal name
+  #SP="calico-aks-sp.$DOMAIN"
+  SP="calico-aks-sp"
   # list service principal
   az ad sp list --spn "http://$SP" --query "[].{id:appId,tenant:appOwnerTenantId,displayName:displayName,appDisplayName:appDisplayName,homepage:homepage,spNames:servicePrincipalNames}"
   ```
@@ -81,7 +90,7 @@ Configure a service principal to be used with the AKS cluster:
   SP_PASSWORD=$(az ad sp create-for-rbac --name "http://$SP" | jq '.password' | sed -e 's/^"//' -e 's/"$//')
   ```
 
-## Using `az aks` to install `Calico` on AKS
+## Using `az aks` to install `kubenet` network plugin and `calico` for network policy on AKS
 
 This example uses [az aks](https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest) command of [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) to create an AKS cluster using `Calico CNI` with Host-Local IPAM and `Calico network policy` engine managed by AKS controller.  
 If you want to use any AKS preview features configure [aks-preview](#configure-azure-cli-extension-and-register-a-feature) extension first.
@@ -99,12 +108,13 @@ Create AKS cluster:
   RG='calico-wbnr'
   LOCATION='centralus'
   CLUSTER_NAME='calico-cni'
-  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
-  DOMAIN="ORG_DOMAIN"
-  SP="calico-aks-sp.$DOMAIN"
+  ## Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
+  #DOMAIN="ORG_DOMAIN"
+  #SP="calico-aks-sp.$DOMAIN"
+  SP="calico-aks-sp"
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  K8S_VERSION=1.21.7
+  K8S_VERSION=1.24.3
   ```
 
 - Check supported k8s versions for the region
@@ -175,7 +185,7 @@ Create AKS cluster:
 
 At this point cluster should be ready for use. See [demo section](#demo) for example app and policies to deploy onto the cluster.
 
-## Using `az aks` to install `Calico Enterprise` on AKS
+## Using `az aks` to install `az-cni` network plugin with `Calico Enterprise` for network policy on AKS
 
 >This example assumes that Azure CLI v2.17+ is used which provisions AKS cluster with Azure CNI v1.2+ where the transparent network mode was made to be the default network configuration option.
 
@@ -192,12 +202,10 @@ Create AKS cluster:
   RG='calico-wbnr'
   LOCATION='centralus'
   CLUSTER_NAME='calient-azcni'
-  # Org or default Azure domain, e.g. contoso.com or calico.onmicrosoft.com
-  DOMAIN="ORG_DOMAIN"
-  SP="calico-aks-sp.$DOMAIN"
+  SP="calico-aks-sp"
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
-  K8S_VERSION=1.21.7
+  K8S_VERSION=1.24.3
   ```
 
 - Check supported k8s versions for the region
@@ -265,9 +273,103 @@ Create AKS cluster:
   az aks get-credentials --resource-group $RG --name $CLUSTER_NAME --file ./kubeconfig
   ```
 
+- Refer to [Tigera official documentation](https://docs.tigera.io/getting-started/kubernetes/aks#install-aks-with-azure-cni-networking) to install Calico Enterprise on AKS
+
 At this point cluster should be ready for use. See [demo section](#demo) for example app and policies to deploy onto the cluster.
 
-## Using `ARM template` to install `Calico Enterprise` on AKS
+## Using `az aks` to install `Calico` network plugin on AKS with `Calico` for network policy
+
+>This example assumes that Azure CLI v2.39+ is used to provision AKS cluster with `none` for network plugin which allows to install `calico` CNI post cluster provisioning.
+
+>This example refers to `SP` and `SP_PASSWORD` variables defined in [service principal section](#configure-service-principal) and provisions AKS cluster to be ready for [bring your own CNI](https://docs.microsoft.com/en-us/azure/aks/use-byo-cni?tabs=azure-cli) configuration.
+
+Create AKS cluster:
+
+- Login into `azure` and set helper variables.
+
+  ```bash
+  # login into az-cli
+  az login
+  ### set vars
+  RG='calico-wbnr'
+  LOCATION='westcentralus'
+  CLUSTER_NAME='calient-byo-cni'
+  SP="calico-aks-sp"
+  ROLE='Contributor'
+  NET_ROLE='Network Contributor'
+  K8S_VERSION=1.24.3
+  ```
+
+- Check supported k8s versions for the region
+
+  ```bash
+  # list supported k8s versions
+  az aks get-versions --location $LOCATION --output table
+  ```
+
+- Create the resource group and configure service principal roles on it
+
+  ```bash
+  # create resoruce group
+  az group create --name $RG --location $LOCATION
+  # get resource group ID
+  RG_ID=$(az group show -n $RG --query 'id' -o tsv)
+  # get service principal client/app Id
+  CLIENT_ID=$(az ad sp list --display-name "http://$SP" --query '[].appId' -o tsv)
+  # set service principal Contributor role on resource group
+  az role assignment create --role $ROLE --assignee $CLIENT_ID --scope $RG_ID
+  # [optional] if Contributor role cannot be used, use 'Network Contributor' role which provides minimum required permissions for AKS resources
+  az role assignment create --role $NET_ROLE --assignee $CLIENT_ID --scope $RG_ID
+  ```
+
+- Deploy AKS cluster.
+
+  >By default AKS cluster uses `VirtualMachineScaleSets` for its nodes. You can change it via `--vm-set-type` parameter. See `az aks create --help` for details.
+
+  ```bash
+  # var to use existing SSH key
+  SSH_KEY='/path/to/ssh_key.pub'
+  # deploy AKS cluster using Calico CNI w/ Host-Local IPAM and Calico net policy
+  az aks create \
+    --resource-group $RG \
+    --name $CLUSTER_NAME \
+    --kubernetes-version $K8S_VERSION \
+    --nodepool-name 'nix' \
+    --node-count 3 \
+    --network-plugin none \
+    --pod-cidr 192.168.0.0/16
+    --service-principal $CLIENT_ID \
+    --client-secret $SP_PASSWORD \
+    --node-osdisk-size 50 \
+    --node-vm-size Standard_D2s_v3 \
+    --max-pods 70 \
+    --output table \
+    --ssh-key-value $SSH_KEY
+  ```
+
+- View cluster state.
+
+  ```bash
+  # list aks clusters
+  az aks list --resource-group $RG --output table
+  ```
+
+- Once cluster is provisioned, retrieve `kubeconfig` info to communicate with the cluster and install `kubectl` if needed.
+
+  ```bash
+  # if needed install kubectl
+  az aks install-cli
+  # retrieve kubeconfig
+  az aks get-credentials --resource-group $RG --name $CLUSTER_NAME --file ./kubeconfig
+  ```
+
+- Refer to [Tigera official documentation](https://docs.tigera.io/getting-started/kubernetes/aks#install-aks-with-calico-networking) to install **Calico Enterprise** on AKS or [ProjectCalico documentation](https://projectcalico.docs.tigera.io/getting-started/kubernetes/managed-public-cloud/aks#install-aks-with-calico-networking) to install open source **Calico** on AKS.
+
+>Note that default Calico CNI configuration assumes that AKS cluster is provisioned with pod CIDR `192.168.0.0/16`, i.e. `--pod-cidr 192.168.0.0/16`. If you use a different range for AKS cluster, download and adjust `custom-resources-calico-cni.yaml` manifest before applying it.
+
+At this point cluster should be ready for use. See [demo section](#demo) for example app and policies to deploy onto the cluster.
+
+## Using `ARM template` to install `az-cni` network plugin with `Calico Enterprise` for network policy on AKS
 
 >This example refers to `SP` and `SP_PASSWORD` variables defined in [service principal section](#configure-service-principal).
 
@@ -297,7 +399,7 @@ This example uses the `ARM template` and its `parameters` file located at [arm](
   ROLE='Contributor'
   NET_ROLE='Network Contributor'
   CLUSTER_NAME='calient-azcni'
-  K8S_VERSION=1.21.7
+  K8S_VERSION=1.24.3
   ```
 
 - Check supported k8s versions for the region
